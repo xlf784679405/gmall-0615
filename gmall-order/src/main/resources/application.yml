@@ -1,0 +1,19 @@
+server:
+  port: 8092
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+  redis:
+    host: 192.168.186.128
+  rabbitmq:
+    host: 192.168.186.128
+    virtual-host: /feige
+    username: feige
+    password: feige
+auth:
+  jwt:
+    publicKeyPath: D:\\software\\ideal\\project-0615\\tmp\\rsa.pub
+    cookieName: GMALL_TOKEN
+

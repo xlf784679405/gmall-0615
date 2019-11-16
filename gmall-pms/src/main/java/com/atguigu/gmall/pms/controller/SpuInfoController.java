@@ -1,14 +1,19 @@
 package com.atguigu.gmall.pms.controller;
 
+import java.io.FileNotFoundException;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
 import com.atguigu.core.bean.PageVo;
 import com.atguigu.core.bean.QueryCondition;
 import com.atguigu.core.bean.Resp;
+import com.atguigu.gmall.pms.vo.SpuInfoVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +35,30 @@ import com.atguigu.gmall.pms.service.SpuInfoService;
 @RestController
 @RequestMapping("pms/spuinfo")
 public class SpuInfoController {
+
     @Autowired
     private SpuInfoService spuInfoService;
+
+    @Autowired
+    private AmqpTemplate amqpTemplate;
+
+    @GetMapping
+    public Resp<PageVo> querySpuInfoByKeyPage(@RequestParam(value = "catId" , defaultValue = "0")Long catId , QueryCondition condition){
+    PageVo pageVo = spuInfoService.querySpuInfoByKeyPage(catId , condition);
+
+    return Resp.ok(pageVo);
+    }
+    /**
+     * 列表
+     */
+    @ApiOperation("分页查询(排序)")
+    @PostMapping("/list")
+    @PreAuthorize("hasAuthority('pms:spuinfo:list')")
+    public Resp<List<SpuInfoEntity>> querySpuPage(@RequestBody QueryCondition queryCondition) {
+        PageVo page = spuInfoService.queryPage(queryCondition);
+
+        return Resp.ok((List<SpuInfoEntity>)page.getList());
+    }
 
     /**
      * 列表
@@ -64,8 +91,8 @@ public class SpuInfoController {
     @ApiOperation("保存")
     @PostMapping("/save")
     @PreAuthorize("hasAuthority('pms:spuinfo:save')")
-    public Resp<Object> save(@RequestBody SpuInfoEntity spuInfo){
-		spuInfoService.save(spuInfo);
+    public Resp<Object> save(@RequestBody SpuInfoVO spuInfoVO) throws FileNotFoundException {
+ 		spuInfoService.bigSave(spuInfoVO);
 
         return Resp.ok(null);
     }
@@ -78,7 +105,7 @@ public class SpuInfoController {
     @PreAuthorize("hasAuthority('pms:spuinfo:update')")
     public Resp<Object> update(@RequestBody SpuInfoEntity spuInfo){
 		spuInfoService.updateById(spuInfo);
-
+        this.sendMsg(spuInfo.getId() , "update");
         return Resp.ok(null);
     }
 
@@ -92,6 +119,13 @@ public class SpuInfoController {
 		spuInfoService.removeByIds(Arrays.asList(ids));
 
         return Resp.ok(null);
+    }
+
+    private void sendMsg(Long spuId , String type) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("id" , spuId);
+        map.put("type" , type);
+        this.amqpTemplate.convertAndSend("GMALL-ITEM-EXCHANGE" , "item" + type , map);
     }
 
 }

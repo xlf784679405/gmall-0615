@@ -3,6 +3,8 @@ spring:
     name: oms-service
   cloud:
     nacos:
-      discovery:
+      config:
         server-addr: 127.0.0.1:8848
         namespace: ed2d71c0-6965-4487-bbd2-c71d830dae55
+        group: dev
+        file-extension: yml

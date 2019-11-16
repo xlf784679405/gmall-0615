@@ -3,6 +3,8 @@ spring:
     name: pms-service
   cloud:
     nacos:
-      discovery:
+      config:
         server-addr: 127.0.0.1:8848
         namespace: 152958c5-7a57-4726-a68a-02627c41dcf8
+        group: dev
+        file-extension: yml
